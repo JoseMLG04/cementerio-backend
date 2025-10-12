@@ -1,16 +1,12 @@
 import postgres from "postgres";
 
-console.log("🔌 Configurando conexión a base de datos...");
+const connectionString = process.env.SUPABASE_URL;
 
-// Extraer partes de la URL manualmente
-const url = new URL(process.env.SUPABASE_URL);
+console.log("🔌 Conectando a base de datos...");
+console.log("URL configurada:", connectionString ? "✅" : "❌");
+console.log("Usando pooler:", connectionString?.includes("pooler") ? "✅" : "❌");
 
-const sql = postgres({
-  host: url.hostname,
-  port: url.port || 5432,
-  database: url.pathname.slice(1), // Quita el "/" inicial
-  username: url.username,
-  password: url.password,
+const sql = postgres(connectionString, {
   ssl: 'require',
   max: 10,
   idle_timeout: 20,
