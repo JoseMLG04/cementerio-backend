@@ -14,21 +14,20 @@ import deudoresRoutes from "./routes/deudoresRoutes.js";
 import movimientosRoutes from "./routes/movimientosRoutes.js";
 
 const app = express();
-const port = process.env.PORT || 3000;
 
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    process.env.FRONTEND_URL || "*"
-  ],
+const PORT = process.env.PORT || 3000;
+
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || "*", 
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-}));
+  optionsSuccessStatus: 200
+};
 
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Rutas
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/difuntos", difuntosRoutes);
 app.use("/api/encargados", encargadosRoutes);
@@ -43,23 +42,20 @@ app.use("/api/movimientos", movimientosRoutes);
 
 app.get("/", (req, res) => {
   res.json({
-    message: "API Cementerio funcionando correctamente",
-    version: "1.0.0",
-    environment: process.env.NODE_ENV || "development"
+    message: "API Cementerio Backend",
+    status: "online",
+    version: "1.0.0"
   });
 });
 
-app.get("/api/health", (req, res) => {
-  res.json({ 
-    status: "OK", 
-    timestamp: new Date().toISOString() 
-  });
+app.get("/health", (req, res) => {
+  res.json({ status: "healthy", timestamp: new Date().toISOString() });
 });
-
-export default app;
 
 if (process.env.NODE_ENV !== "production") {
-  app.listen(port, () => {
-    console.log(`Escuchando en puerto ${port}`);
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+    console.log(`📍 Modo: ${process.env.NODE_ENV || "development"}`);
   });
 }
+export default app;
