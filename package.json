@@ -2,12 +2,16 @@
   "name": "cementerio-backend",
   "type": "module",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend API para sistema de gestión de cementerio",
   "main": "app.js",
   "scripts": {
     "dev": "nodemon app.js",
     "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   },
   "author": "",
   "license": "ISC",
