@@ -18,7 +18,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "*", 
+  origin: process.env.FRONTEND_URL || "*",
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -27,7 +27,6 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/difuntos", difuntosRoutes);
 app.use("/api/encargados", encargadosRoutes);
@@ -52,10 +51,10 @@ app.get("/health", (req, res) => {
   res.json({ status: "healthy", timestamp: new Date().toISOString() });
 });
 
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-    console.log(`📍 Modo: ${process.env.NODE_ENV || "development"}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  console.log(`📍 Modo: ${process.env.NODE_ENV || "development"}`);
+  console.log(`⏰ Timestamp: ${new Date().toISOString()}`);
+});
+
 export default app;
