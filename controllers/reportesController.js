@@ -321,16 +321,11 @@ export const informacionDifunto = async (req, res) => {
         e.esp_total_pagado,
         e.esp_restante_pago,
         l.loc_area,
-        p.pan_no_panteon,
-        enc.enc_primer_nombre || ' ' || COALESCE(enc.enc_primer_apellido, '') as encargado_nombre,
-        enc.enc_telefono_uno as encargado_telefono,
-        enc.enc_dpi as encargado_dpi,
-        enc.enc_direccion as encargado_direccion
+        p.pan_no_panteon
       FROM cem_difuntos d
       LEFT JOIN cem_espacios e ON d.dif_espacios = e.esp_id
       LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
       LEFT JOIN cem_panteones p ON e.esp_panteon = p.pan_id
-      LEFT JOIN cem_encargado enc ON d.dif_encargados = enc.enc_id
       WHERE d.dif_id = ${id}
     `;
 
@@ -375,7 +370,6 @@ export const informacionDifunto = async (req, res) => {
   }
 };
 
-
 export const buscarDifuntos = async (req, res) => {
   const { busqueda } = req.query;
   try {
@@ -410,7 +404,6 @@ export const buscarDifuntos = async (req, res) => {
   }
 };
 
-
 export const constanciaDifunto = async (req, res) => {
   const { id } = req.params;
   try {
@@ -428,15 +421,11 @@ export const constanciaDifunto = async (req, res) => {
         e.esp_no_espacio,
         e.esp_espacio,
         l.loc_area,
-        p.pan_no_panteon,
-        enc.enc_primer_nombre || ' ' || COALESCE(enc.enc_primer_apellido, '') as encargado,
-        enc.enc_dpi as encargado_dpi,
-        enc.enc_telefono_uno as encargado_telefono
+        p.pan_no_panteon
       FROM cem_difuntos d
       LEFT JOIN cem_espacios e ON d.dif_espacios = e.esp_id
       LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
       LEFT JOIN cem_panteones p ON e.esp_panteon = p.pan_id
-      LEFT JOIN cem_encargado enc ON d.dif_encargados = enc.enc_id
       WHERE d.dif_id = ${id}
     `;
 
@@ -450,7 +439,6 @@ export const constanciaDifunto = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 export const historialTransaccionesEspacio = async (req, res) => {
   const { espacioId } = req.params;
@@ -519,12 +507,6 @@ export const espaciosConDifuntos = async (req, res) => {
           ELSE NULL
         END as difunto_nombre,
         d.dif_fecha_entierro,
-        CASE 
-          WHEN enc.enc_primer_nombre IS NOT NULL 
-          THEN enc.enc_primer_nombre || ' ' || COALESCE(enc.enc_primer_apellido, '')
-          ELSE NULL
-        END as encargado,
-        enc.enc_telefono_uno as enc_telefono,
         e.esp_valor_total,
         e.esp_total_pagado,
         e.esp_restante_pago
@@ -532,7 +514,6 @@ export const espaciosConDifuntos = async (req, res) => {
       LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
       LEFT JOIN cem_panteones p ON e.esp_panteon = p.pan_id
       LEFT JOIN cem_difuntos d ON d.dif_espacios = e.esp_id
-      LEFT JOIN cem_encargado enc ON d.dif_encargados = enc.enc_id
       ORDER BY l.loc_area, e.esp_no_espacio
     `;
 
