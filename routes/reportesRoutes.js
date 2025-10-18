@@ -10,6 +10,11 @@ import {
   espaciosDisponibles,
   resumenFinancieroPorEspacio,
   topDeudores,
+  informacionDifunto,
+  buscarDifuntos,
+  constanciaDifunto,
+  historialTransaccionesEspacio,
+  espaciosConDifuntos,
 } from "../controllers/reportesController.js";
 
 const router = express.Router();
@@ -24,5 +29,12 @@ router.get("/movimientos-recientes", movimientosRecientes);
 router.get("/espacios-disponibles", espaciosDisponibles);
 router.get("/resumen-financiero", resumenFinancieroPorEspacio);
 router.get("/top-deudores", topDeudores);
+
+
+router.get("/difunto/:id", informacionDifunto);
+router.get("/buscar-difuntos", buscarDifuntos);
+router.get("/constancia-difunto/:id", constanciaDifunto);
+router.get("/historial-espacio/:espacioId", historialTransaccionesEspacio);
+router.get("/espacios-difuntos", espaciosConDifuntos);
 
 export default router;
