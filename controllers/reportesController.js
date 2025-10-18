@@ -312,7 +312,7 @@ export const topDeudores = async (req, res) => {
 export const informacionDifunto = async (req, res) => {
   const { id } = req.params;
   try {
-    const [difunto] = await sql`
+    const resultado = await sql`
       SELECT 
         d.*,
         e.esp_no_espacio,
@@ -334,9 +334,11 @@ export const informacionDifunto = async (req, res) => {
       WHERE d.dif_id = ${id}
     `;
 
-    if (!difunto) {
+    if (!resultado || resultado.length === 0) {
       return res.status(404).json({ error: "Difunto no encontrado" });
     }
+
+    const difunto = resultado[0];
 
     const movimientos = await sql`
       SELECT 
@@ -373,6 +375,9 @@ export const informacionDifunto = async (req, res) => {
   }
 };
 
+// ============================================
+// REPORTE: BÚSQUEDA DE DIFUNTOS
+// ============================================
 export const buscarDifuntos = async (req, res) => {
   const { busqueda } = req.query;
   try {
@@ -407,10 +412,13 @@ export const buscarDifuntos = async (req, res) => {
   }
 };
 
+// ============================================
+// REPORTE: CONSTANCIA DE DIFUNTO (CERTIFICADO)
+// ============================================
 export const constanciaDifunto = async (req, res) => {
   const { id } = req.params;
   try {
-    const [constancia] = await sql`
+    const resultado = await sql`
       SELECT 
         d.dif_primer_nombre || ' ' || 
         COALESCE(d.dif_segundo_nombre || ' ', '') || 
@@ -436,21 +444,24 @@ export const constanciaDifunto = async (req, res) => {
       WHERE d.dif_id = ${id}
     `;
 
-    if (!constancia) {
+    if (!resultado || resultado.length === 0) {
       return res.status(404).json({ error: "Difunto no encontrado" });
     }
 
-    res.json(constancia);
+    res.json(resultado[0]);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
 
+// ============================================
+// REPORTE: HISTORIAL DE TRANSACCIONES POR ESPACIO
+// ============================================
 export const historialTransaccionesEspacio = async (req, res) => {
   const { espacioId } = req.params;
   try {
-    const [espacio] = await sql`
+    const resultadoEspacio = await sql`
       SELECT 
         e.esp_no_espacio,
         e.esp_espacio,
@@ -465,9 +476,11 @@ export const historialTransaccionesEspacio = async (req, res) => {
       WHERE e.esp_id = ${espacioId}
     `;
 
-    if (!espacio) {
+    if (!resultadoEspacio || resultadoEspacio.length === 0) {
       return res.status(404).json({ error: "Espacio no encontrado" });
     }
+
+    const espacio = resultadoEspacio[0];
 
     const transacciones = await sql`
       SELECT 
@@ -496,6 +509,9 @@ export const historialTransaccionesEspacio = async (req, res) => {
   }
 };
 
+// ============================================
+// REPORTE: ESPACIOS CON SUS DIFUNTOS
+// ============================================
 export const espaciosConDifuntos = async (req, res) => {
   try {
     const espacios = await sql`
@@ -521,13 +537,15 @@ export const espaciosConDifuntos = async (req, res) => {
       ORDER BY l.loc_area, e.esp_no_espacio
     `;
 
-    const [resumen] = await sql`
+    const resultadoResumen = await sql`
       SELECT 
         COUNT(*) as total_espacios,
         COUNT(*) FILTER (WHERE esp_ocupado = true) as espacios_ocupados,
         COUNT(*) FILTER (WHERE esp_ocupado = false) as espacios_disponibles
       FROM cem_espacios
     `;
+
+    const resumen = resultadoResumen[0];
 
     res.json({
       espacios,
