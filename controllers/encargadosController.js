@@ -6,59 +6,176 @@ export const obtenerEncargados = async (req, res) => {
   const { dpi, telefono, nombre } = req.query;
 
   try {
-    let conditions = [];
-    const params = [];
-    let paramIndex = 1;
+    let encargados;
+    let totalResult;
 
-    if (dpi) {
-      conditions.push(`e.enc_dpi = $${paramIndex}`);
-      params.push(dpi);
-      paramIndex++;
-    }
+    if (!dpi && !telefono && !nombre) {
 
-    if (telefono) {
-      conditions.push(`(e.enc_telefono_uno = $${paramIndex} OR e.enc_telefono_dos = $${paramIndex})`);
-      params.push(telefono);
-      paramIndex++;
-    }
+      encargados = await sql`
+        SELECT 
+          e.*,
+          p.pan_nombre_familia
+        FROM cem_encargado e
+        LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
+        ORDER BY e.enc_id DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `;
 
-    if (nombre) {
+      totalResult = await sql`
+        SELECT COUNT(*) FROM cem_encargado
+      `;
+    } else if (dpi && !telefono && !nombre) {
+
+      encargados = await sql`
+        SELECT 
+          e.*,
+          p.pan_nombre_familia
+        FROM cem_encargado e
+        LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
+        WHERE e.enc_dpi = ${dpi}
+        ORDER BY e.enc_id DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+
+      totalResult = await sql`
+        SELECT COUNT(*) FROM cem_encargado WHERE enc_dpi = ${dpi}
+      `;
+    } else if (telefono && !dpi && !nombre) {
+
+      encargados = await sql`
+        SELECT 
+          e.*,
+          p.pan_nombre_familia
+        FROM cem_encargado e
+        LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
+        WHERE (e.enc_telefono_uno = ${telefono} OR e.enc_telefono_dos = ${telefono})
+        ORDER BY e.enc_id DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+
+      totalResult = await sql`
+        SELECT COUNT(*) FROM cem_encargado 
+        WHERE (enc_telefono_uno = ${telefono} OR enc_telefono_dos = ${telefono})
+      `;
+    } else if (nombre && !dpi && !telefono) {
+
       const nombreBusqueda = `%${nombre}%`;
-      conditions.push(`(CONCAT(e.enc_primer_nombre, ' ', COALESCE(e.enc_segundo_nombre, ''), ' ', e.enc_primer_apellido, ' ', COALESCE(e.enc_segundo_apellido, '')) ILIKE $${paramIndex})`);
-      params.push(nombreBusqueda);
-      paramIndex++;
+      encargados = await sql`
+        SELECT 
+          e.*,
+          p.pan_nombre_familia
+        FROM cem_encargado e
+        LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
+        WHERE (
+          CONCAT(e.enc_primer_nombre, ' ', COALESCE(e.enc_segundo_nombre, ''), ' ', 
+                 e.enc_primer_apellido, ' ', COALESCE(e.enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
+        )
+        ORDER BY e.enc_id DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+
+      totalResult = await sql`
+        SELECT COUNT(*) FROM cem_encargado 
+        WHERE (
+          CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', 
+                 enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
+        )
+      `;
+    } else if (dpi && telefono && !nombre) {
+
+      encargados = await sql`
+        SELECT 
+          e.*,
+          p.pan_nombre_familia
+        FROM cem_encargado e
+        LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
+        WHERE e.enc_dpi = ${dpi}
+          AND (e.enc_telefono_uno = ${telefono} OR e.enc_telefono_dos = ${telefono})
+        ORDER BY e.enc_id DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+
+      totalResult = await sql`
+        SELECT COUNT(*) FROM cem_encargado 
+        WHERE enc_dpi = ${dpi}
+          AND (enc_telefono_uno = ${telefono} OR enc_telefono_dos = ${telefono})
+      `;
+    } else if (dpi && nombre && !telefono) {
+
+      const nombreBusqueda = `%${nombre}%`;
+      encargados = await sql`
+        SELECT 
+          e.*,
+          p.pan_nombre_familia
+        FROM cem_encargado e
+        LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
+        WHERE e.enc_dpi = ${dpi}
+          AND CONCAT(e.enc_primer_nombre, ' ', COALESCE(e.enc_segundo_nombre, ''), ' ', 
+                     e.enc_primer_apellido, ' ', COALESCE(e.enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
+        ORDER BY e.enc_id DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+
+      totalResult = await sql`
+        SELECT COUNT(*) FROM cem_encargado 
+        WHERE enc_dpi = ${dpi}
+          AND CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', 
+                     enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
+      `;
+    } else if (telefono && nombre && !dpi) {
+
+      const nombreBusqueda = `%${nombre}%`;
+      encargados = await sql`
+        SELECT 
+          e.*,
+          p.pan_nombre_familia
+        FROM cem_encargado e
+        LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
+        WHERE (e.enc_telefono_uno = ${telefono} OR e.enc_telefono_dos = ${telefono})
+          AND CONCAT(e.enc_primer_nombre, ' ', COALESCE(e.enc_segundo_nombre, ''), ' ', 
+                     e.enc_primer_apellido, ' ', COALESCE(e.enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
+        ORDER BY e.enc_id DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+
+      totalResult = await sql`
+        SELECT COUNT(*) FROM cem_encargado 
+        WHERE (enc_telefono_uno = ${telefono} OR enc_telefono_dos = ${telefono})
+          AND CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', 
+                     enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
+      `;
+    } else {
+
+      const nombreBusqueda = `%${nombre}%`;
+      encargados = await sql`
+        SELECT 
+          e.*,
+          p.pan_nombre_familia
+        FROM cem_encargado e
+        LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
+        WHERE e.enc_dpi = ${dpi}
+          AND (e.enc_telefono_uno = ${telefono} OR e.enc_telefono_dos = ${telefono})
+          AND CONCAT(e.enc_primer_nombre, ' ', COALESCE(e.enc_segundo_nombre, ''), ' ', 
+                     e.enc_primer_apellido, ' ', COALESCE(e.enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
+        ORDER BY e.enc_id DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+
+      totalResult = await sql`
+        SELECT COUNT(*) FROM cem_encargado 
+        WHERE enc_dpi = ${dpi}
+          AND (enc_telefono_uno = ${telefono} OR enc_telefono_dos = ${telefono})
+          AND CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', 
+                     enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
+      `;
     }
-
-    const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
-
-    const baseQuery = `
-      SELECT 
-        e.*,
-        p.pan_nombre_familia
-      FROM cem_encargado e
-      LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
-      ${whereClause}
-      ORDER BY e.enc_id DESC 
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `;
-    params.push(limit, offset);
-
-    const countQuery = `
-      SELECT COUNT(*) 
-      FROM cem_encargado e
-      ${whereClause}
-    `;
-    const countParams = params.slice(0, -2);
-
-    const encargados = await sql.unsafe(baseQuery, params);
-    const total = await sql.unsafe(countQuery, countParams);
 
     res.json({
       data: encargados,
-      total: Number(total[0].count),
+      total: Number(totalResult[0].count),
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en obtenerEncargados:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -86,7 +203,7 @@ export const crearEncargado = async (req, res) => {
       ) RETURNING *`;
     res.status(201).json(nuevoEncargado[0]);
   } catch (error) {
-    console.error(error);
+    console.error("Error en crearEncargado:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -121,7 +238,7 @@ export const editarEncargado = async (req, res) => {
       RETURNING *`;
     res.json(actualizado[0]);
   } catch (error) {
-    console.error(error);
+    console.error("Error en editarEncargado:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -132,7 +249,7 @@ export const eliminarEncargado = async (req, res) => {
     await sql`DELETE FROM cem_encargado WHERE enc_id = ${id}`;
     res.json({ mensaje: "Encargado eliminado" });
   } catch (error) {
-    console.error(error);
+    console.error("Error en eliminarEncargado:", error);
     res.status(500).json({ error: error.message });
   }
 };
