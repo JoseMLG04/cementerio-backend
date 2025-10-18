@@ -375,6 +375,7 @@ export const informacionDifunto = async (req, res) => {
   }
 };
 
+
 export const buscarDifuntos = async (req, res) => {
   const { busqueda } = req.query;
   try {
@@ -408,6 +409,7 @@ export const buscarDifuntos = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 export const constanciaDifunto = async (req, res) => {
   const { id } = req.params;
@@ -448,6 +450,7 @@ export const constanciaDifunto = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 export const historialTransaccionesEspacio = async (req, res) => {
   const { espacioId } = req.params;
