@@ -308,3 +308,233 @@ export const topDeudores = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const informacionDifunto = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [difunto] = await sql`
+      SELECT 
+        d.*,
+        e.esp_no_espacio,
+        e.esp_espacio,
+        e.esp_valor_total,
+        e.esp_total_pagado,
+        e.esp_restante_pago,
+        l.loc_area,
+        p.pan_no_panteon,
+        enc.enc_primer_nombre || ' ' || enc.enc_primer_apellido as encargado_nombre,
+        enc.enc_telefono as encargado_telefono,
+        enc.enc_dpi as encargado_dpi,
+        enc.enc_direccion as encargado_direccion
+      FROM cem_difuntos d
+      LEFT JOIN cem_espacios e ON d.dif_espacios = e.esp_id
+      LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
+      LEFT JOIN cem_panteones p ON e.esp_panteon = p.pan_id
+      LEFT JOIN cem_encargados enc ON d.dif_encargados = enc.enc_id
+      WHERE d.dif_id = ${id}
+    `;
+
+    if (!difunto) {
+      return res.status(404).json({ error: "Difunto no encontrado" });
+    }
+
+    const movimientos = await sql`
+      SELECT 
+        m.mov_fecha,
+        e.est_descripcion,
+        m.mov_observaciones
+      FROM cem_movimientos m
+      JOIN cem_estados e ON m.mov_estados = e.est_id
+      WHERE m.mov_difuntos = ${id}
+      ORDER BY m.mov_fecha DESC
+    `;
+
+    const transacciones = await sql`
+      SELECT 
+        t.tra_fecha_pago,
+        t.tra_abono,
+        t.tra_no_recibo,
+        t.tra_observaciones
+      FROM cem_transacciones t
+      JOIN cem_espacios es ON t.tra_espacios = es.esp_id
+      JOIN cem_difuntos d ON d.dif_espacios = es.esp_id
+      WHERE d.dif_id = ${id}
+      ORDER BY t.tra_fecha_pago DESC
+    `;
+
+    res.json({
+      difunto,
+      movimientos,
+      transacciones
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const buscarDifuntos = async (req, res) => {
+  const { busqueda } = req.query;
+  try {
+    const difuntos = await sql`
+      SELECT 
+        d.dif_id,
+        d.dif_primer_nombre,
+        d.dif_segundo_nombre,
+        d.dif_primer_apellido,
+        d.dif_segundo_apellido,
+        d.dif_fecha_defuncion,
+        d.dif_fecha_entierro,
+        e.esp_no_espacio,
+        e.esp_espacio,
+        l.loc_area
+      FROM cem_difuntos d
+      LEFT JOIN cem_espacios e ON d.dif_espacios = e.esp_id
+      LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
+      WHERE 
+        CONCAT(d.dif_primer_nombre, ' ', d.dif_segundo_nombre, ' ', 
+               d.dif_primer_apellido, ' ', d.dif_segundo_apellido) ILIKE ${`%${busqueda}%`}
+        OR d.dif_dpi ILIKE ${`%${busqueda}%`}
+        OR e.esp_no_espacio ILIKE ${`%${busqueda}%`}
+      ORDER BY d.dif_fecha_entierro DESC
+      LIMIT 50
+    `;
+
+    res.json(difuntos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const constanciaDifunto = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [constancia] = await sql`
+      SELECT 
+        d.dif_primer_nombre || ' ' || 
+        COALESCE(d.dif_segundo_nombre || ' ', '') || 
+        d.dif_primer_apellido || ' ' || 
+        COALESCE(d.dif_segundo_apellido, '') as nombre_completo,
+        d.dif_dpi,
+        d.dif_fecha_nacimiento,
+        d.dif_fecha_defuncion,
+        d.dif_fecha_entierro,
+        d.dif_causa_muerte,
+        e.esp_no_espacio,
+        e.esp_espacio,
+        l.loc_area,
+        p.pan_no_panteon,
+        enc.enc_primer_nombre || ' ' || enc.enc_primer_apellido as encargado,
+        enc.enc_dpi as encargado_dpi,
+        enc.enc_telefono as encargado_telefono
+      FROM cem_difuntos d
+      LEFT JOIN cem_espacios e ON d.dif_espacios = e.esp_id
+      LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
+      LEFT JOIN cem_panteones p ON e.esp_panteon = p.pan_id
+      LEFT JOIN cem_encargados enc ON d.dif_encargados = enc.enc_id
+      WHERE d.dif_id = ${id}
+    `;
+
+    if (!constancia) {
+      return res.status(404).json({ error: "Difunto no encontrado" });
+    }
+
+    res.json(constancia);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const historialTransaccionesEspacio = async (req, res) => {
+  const { espacioId } = req.params;
+  try {
+    const [espacio] = await sql`
+      SELECT 
+        e.esp_no_espacio,
+        e.esp_espacio,
+        e.esp_valor_total,
+        e.esp_total_pagado,
+        e.esp_restante_pago,
+        l.loc_area,
+        d.dif_primer_nombre || ' ' || d.dif_primer_apellido as difunto
+      FROM cem_espacios e
+      LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
+      LEFT JOIN cem_difuntos d ON d.dif_espacios = e.esp_id
+      WHERE e.esp_id = ${espacioId}
+    `;
+
+    if (!espacio) {
+      return res.status(404).json({ error: "Espacio no encontrado" });
+    }
+
+    const transacciones = await sql`
+      SELECT 
+        tra_id,
+        tra_fecha_pago,
+        tra_abono,
+        tra_no_recibo,
+        tra_observaciones
+      FROM cem_transacciones
+      WHERE tra_espacios = ${espacioId}
+      ORDER BY tra_fecha_pago DESC
+    `;
+
+    res.json({
+      espacio,
+      transacciones,
+      resumen: {
+        total_transacciones: transacciones.length,
+        total_pagado: espacio.esp_total_pagado,
+        total_pendiente: espacio.esp_restante_pago
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const espaciosConDifuntos = async (req, res) => {
+  try {
+    const espacios = await sql`
+      SELECT 
+        e.esp_id,
+        e.esp_no_espacio,
+        e.esp_espacio,
+        e.esp_ocupado,
+        l.loc_area,
+        p.pan_no_panteon,
+        d.dif_primer_nombre || ' ' || d.dif_primer_apellido as difunto_nombre,
+        d.dif_fecha_entierro,
+        enc.enc_primer_nombre || ' ' || enc.enc_primer_apellido as encargado,
+        enc.enc_telefono,
+        e.esp_valor_total,
+        e.esp_total_pagado,
+        e.esp_restante_pago
+      FROM cem_espacios e
+      LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
+      LEFT JOIN cem_panteones p ON e.esp_panteon = p.pan_id
+      LEFT JOIN cem_difuntos d ON d.dif_espacios = e.esp_id
+      LEFT JOIN cem_encargados enc ON d.dif_encargados = enc.enc_id
+      ORDER BY l.loc_area, e.esp_no_espacio
+    `;
+
+    const [resumen] = await sql`
+      SELECT 
+        COUNT(*) as total_espacios,
+        COUNT(*) FILTER (WHERE esp_ocupado = true) as espacios_ocupados,
+        COUNT(*) FILTER (WHERE esp_ocupado = false) as espacios_disponibles
+      FROM cem_espacios
+    `;
+
+    res.json({
+      espacios,
+      resumen
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
