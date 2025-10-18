@@ -322,15 +322,15 @@ export const informacionDifunto = async (req, res) => {
         e.esp_restante_pago,
         l.loc_area,
         p.pan_no_panteon,
-        enc.enc_primer_nombre || ' ' || enc.enc_primer_apellido as encargado_nombre,
-        enc.enc_telefono as encargado_telefono,
+        enc.enc_primer_nombre || ' ' || COALESCE(enc.enc_primer_apellido, '') as encargado_nombre,
+        enc.enc_telefono_uno as encargado_telefono,
         enc.enc_dpi as encargado_dpi,
         enc.enc_direccion as encargado_direccion
       FROM cem_difuntos d
       LEFT JOIN cem_espacios e ON d.dif_espacios = e.esp_id
       LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
       LEFT JOIN cem_panteones p ON e.esp_panteon = p.pan_id
-      LEFT JOIN cem_encargados enc ON d.dif_encargados = enc.enc_id
+      LEFT JOIN cem_encargado enc ON d.dif_encargados = enc.enc_id
       WHERE d.dif_id = ${id}
     `;
 
@@ -370,7 +370,7 @@ export const informacionDifunto = async (req, res) => {
       transacciones
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en informacionDifunto:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -427,14 +427,14 @@ export const constanciaDifunto = async (req, res) => {
         e.esp_espacio,
         l.loc_area,
         p.pan_no_panteon,
-        enc.enc_primer_nombre || ' ' || enc.enc_primer_apellido as encargado,
+        enc.enc_primer_nombre || ' ' || COALESCE(enc.enc_primer_apellido, '') as encargado,
         enc.enc_dpi as encargado_dpi,
-        enc.enc_telefono as encargado_telefono
+        enc.enc_telefono_uno as encargado_telefono
       FROM cem_difuntos d
       LEFT JOIN cem_espacios e ON d.dif_espacios = e.esp_id
       LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
       LEFT JOIN cem_panteones p ON e.esp_panteon = p.pan_id
-      LEFT JOIN cem_encargados enc ON d.dif_encargados = enc.enc_id
+      LEFT JOIN cem_encargado enc ON d.dif_encargados = enc.enc_id
       WHERE d.dif_id = ${id}
     `;
 
@@ -444,7 +444,7 @@ export const constanciaDifunto = async (req, res) => {
 
     res.json(resultado[0]);
   } catch (error) {
-    console.error(error);
+    console.error("Error en constanciaDifunto:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -510,10 +510,18 @@ export const espaciosConDifuntos = async (req, res) => {
         e.esp_ocupado,
         l.loc_area,
         p.pan_no_panteon,
-        d.dif_primer_nombre || ' ' || d.dif_primer_apellido as difunto_nombre,
+        CASE 
+          WHEN d.dif_primer_nombre IS NOT NULL 
+          THEN d.dif_primer_nombre || ' ' || COALESCE(d.dif_primer_apellido, '')
+          ELSE NULL
+        END as difunto_nombre,
         d.dif_fecha_entierro,
-        enc.enc_primer_nombre || ' ' || enc.enc_primer_apellido as encargado,
-        enc.enc_telefono,
+        CASE 
+          WHEN enc.enc_primer_nombre IS NOT NULL 
+          THEN enc.enc_primer_nombre || ' ' || COALESCE(enc.enc_primer_apellido, '')
+          ELSE NULL
+        END as encargado,
+        enc.enc_telefono_uno as enc_telefono,
         e.esp_valor_total,
         e.esp_total_pagado,
         e.esp_restante_pago
@@ -521,7 +529,7 @@ export const espaciosConDifuntos = async (req, res) => {
       LEFT JOIN cem_locacion l ON e.esp_locacion = l.loc_id
       LEFT JOIN cem_panteones p ON e.esp_panteon = p.pan_id
       LEFT JOIN cem_difuntos d ON d.dif_espacios = e.esp_id
-      LEFT JOIN cem_encargados enc ON d.dif_encargados = enc.enc_id
+      LEFT JOIN cem_encargado enc ON d.dif_encargados = enc.enc_id
       ORDER BY l.loc_area, e.esp_no_espacio
     `;
 
@@ -542,7 +550,7 @@ export const espaciosConDifuntos = async (req, res) => {
       resumen
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en espaciosConDifuntos:", error);
     res.status(500).json({ error: error.message });
   }
 };
