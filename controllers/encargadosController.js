@@ -6,38 +6,52 @@ export const obtenerEncargados = async (req, res) => {
   const { dpi, telefono, nombre } = req.query;
 
   try {
-    let baseQuery = 'SELECT * FROM cem_encargado WHERE 1=1';
-    let countQuery = 'SELECT COUNT(*) FROM cem_encargado WHERE 1=1';
+    let conditions = [];
     const params = [];
     let paramIndex = 1;
 
     if (dpi) {
-      baseQuery += ` AND enc_dpi = $${paramIndex}`;
-      countQuery += ` AND enc_dpi = $${paramIndex}`;
+      conditions.push(`e.enc_dpi = $${paramIndex}`);
       params.push(dpi);
       paramIndex++;
     }
 
     if (telefono) {
-      baseQuery += ` AND (enc_telefono_uno = $${paramIndex} OR enc_telefono_dos = $${paramIndex})`;
-      countQuery += ` AND (enc_telefono_uno = $${paramIndex} OR enc_telefono_dos = $${paramIndex})`;
+      conditions.push(`(e.enc_telefono_uno = $${paramIndex} OR e.enc_telefono_dos = $${paramIndex})`);
       params.push(telefono);
       paramIndex++;
     }
 
     if (nombre) {
       const nombreBusqueda = `%${nombre}%`;
-      baseQuery += ` AND (CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE $${paramIndex})`;
-      countQuery += ` AND (CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE $${paramIndex})`;
+      conditions.push(`(CONCAT(e.enc_primer_nombre, ' ', COALESCE(e.enc_segundo_nombre, ''), ' ', e.enc_primer_apellido, ' ', COALESCE(e.enc_segundo_apellido, '')) ILIKE $${paramIndex})`);
       params.push(nombreBusqueda);
       paramIndex++;
     }
 
-    baseQuery += ` ORDER BY enc_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+    const baseQuery = `
+      SELECT 
+        e.*,
+        p.pan_nombre_familia
+      FROM cem_encargado e
+      LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
+      ${whereClause}
+      ORDER BY e.enc_id DESC 
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
     params.push(limit, offset);
 
+    const countQuery = `
+      SELECT COUNT(*) 
+      FROM cem_encargado e
+      ${whereClause}
+    `;
+    const countParams = params.slice(0, -2);
+
     const encargados = await sql.unsafe(baseQuery, params);
-    const total = await sql.unsafe(countQuery, params.slice(0, -2));
+    const total = await sql.unsafe(countQuery, countParams);
 
     res.json({
       data: encargados,
