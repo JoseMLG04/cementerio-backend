@@ -375,9 +375,6 @@ export const informacionDifunto = async (req, res) => {
   }
 };
 
-// ============================================
-// REPORTE: BÚSQUEDA DE DIFUNTOS
-// ============================================
 export const buscarDifuntos = async (req, res) => {
   const { busqueda } = req.query;
   try {
@@ -412,9 +409,6 @@ export const buscarDifuntos = async (req, res) => {
   }
 };
 
-// ============================================
-// REPORTE: CONSTANCIA DE DIFUNTO (CERTIFICADO)
-// ============================================
 export const constanciaDifunto = async (req, res) => {
   const { id } = req.params;
   try {
@@ -455,9 +449,6 @@ export const constanciaDifunto = async (req, res) => {
   }
 };
 
-// ============================================
-// REPORTE: HISTORIAL DE TRANSACCIONES POR ESPACIO
-// ============================================
 export const historialTransaccionesEspacio = async (req, res) => {
   const { espacioId } = req.params;
   try {
@@ -509,9 +500,6 @@ export const historialTransaccionesEspacio = async (req, res) => {
   }
 };
 
-// ============================================
-// REPORTE: ESPACIOS CON SUS DIFUNTOS
-// ============================================
 export const espaciosConDifuntos = async (req, res) => {
   try {
     const espacios = await sql`
@@ -545,10 +533,12 @@ export const espaciosConDifuntos = async (req, res) => {
       FROM cem_espacios
     `;
 
-    const resumen = resultadoResumen[0];
+    const resumen = resultadoResumen && resultadoResumen.length > 0 
+      ? resultadoResumen[0] 
+      : { total_espacios: 0, espacios_ocupados: 0, espacios_disponibles: 0 };
 
     res.json({
-      espacios,
+      espacios: espacios || [],
       resumen
     });
   } catch (error) {
