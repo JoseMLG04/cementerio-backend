@@ -37,7 +37,7 @@ app.use(helmet({
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: isProduction ? 100 : 1000,
+  max: isProduction ? 1000 : 5000,
   message: { error: "Demasiadas peticiones, intenta más tarde" },
   standardHeaders: true,
   legacyHeaders: false,
