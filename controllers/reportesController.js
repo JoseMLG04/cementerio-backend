@@ -350,7 +350,7 @@ export const informacionDifunto = async (req, res) => {
       SELECT 
         t.tra_fecha_pago,
         t.tra_abono,
-        t.tra_no_recibo,
+        t.tra_documento,
         t.tra_observaciones
       FROM cem_transacciones t
       JOIN cem_espacios es ON t.tra_espacios = es.esp_id
@@ -369,6 +369,7 @@ export const informacionDifunto = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 export const buscarDifuntos = async (req, res) => {
   const { busqueda } = req.query;
@@ -469,7 +470,7 @@ export const historialTransaccionesEspacio = async (req, res) => {
         tra_id,
         tra_fecha_pago,
         tra_abono,
-        tra_no_recibo,
+        tra_documento,
         tra_observaciones
       FROM cem_transacciones
       WHERE tra_espacios = ${espacioId}
