@@ -50,12 +50,12 @@ const corsOptions = {
   origin: process.env.FRONTEND_URL || "*",
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 };
 
 app.use(cors(corsOptions));
-
+app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
@@ -68,6 +68,10 @@ const rutasPublicas = [
 ];
 
 app.use((req, res, next) => {
+
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
 
   if (rutasPublicas.includes(req.path)) {
     return next();
