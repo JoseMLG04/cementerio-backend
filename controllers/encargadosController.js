@@ -10,83 +10,74 @@ export const obtenerEncargados = async (req, res) => {
     let totalResult;
 
     if (!dpi && !telefono && !nombre) {
-
       encargados = await sql`
         SELECT 
           e.*,
-          p.pan_nombre_familia
+          p.pan_descripcion
         FROM cem_encargado e
         LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
         ORDER BY e.enc_id DESC 
         LIMIT ${limit} OFFSET ${offset}
       `;
+      totalResult = await sql`SELECT COUNT(*) FROM cem_encargado`;
+    } 
 
-      totalResult = await sql`
-        SELECT COUNT(*) FROM cem_encargado
-      `;
-    } else if (dpi && !telefono && !nombre) {
-
+    else if (dpi && !telefono && !nombre) {
       encargados = await sql`
         SELECT 
           e.*,
-          p.pan_nombre_familia
+          p.pan_descripcion
         FROM cem_encargado e
         LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
         WHERE e.enc_dpi = ${dpi}
         ORDER BY e.enc_id DESC 
         LIMIT ${limit} OFFSET ${offset}
       `;
+      totalResult = await sql`SELECT COUNT(*) FROM cem_encargado WHERE enc_dpi = ${dpi}`;
+    } 
 
-      totalResult = await sql`
-        SELECT COUNT(*) FROM cem_encargado WHERE enc_dpi = ${dpi}
-      `;
-    } else if (telefono && !dpi && !nombre) {
-
+    else if (telefono && !dpi && !nombre) {
       encargados = await sql`
         SELECT 
           e.*,
-          p.pan_nombre_familia
+          p.pan_descripcion
         FROM cem_encargado e
         LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
         WHERE (e.enc_telefono_uno = ${telefono} OR e.enc_telefono_dos = ${telefono})
         ORDER BY e.enc_id DESC 
         LIMIT ${limit} OFFSET ${offset}
       `;
-
       totalResult = await sql`
         SELECT COUNT(*) FROM cem_encargado 
         WHERE (enc_telefono_uno = ${telefono} OR enc_telefono_dos = ${telefono})
       `;
-    } else if (nombre && !dpi && !telefono) {
+    } 
 
+    else if (nombre && !dpi && !telefono) {
       const nombreBusqueda = `%${nombre}%`;
       encargados = await sql`
         SELECT 
           e.*,
-          p.pan_nombre_familia
+          p.pan_descripcion
         FROM cem_encargado e
         LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
-        WHERE (
-          CONCAT(e.enc_primer_nombre, ' ', COALESCE(e.enc_segundo_nombre, ''), ' ', 
-                 e.enc_primer_apellido, ' ', COALESCE(e.enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
-        )
+        WHERE CONCAT(e.enc_primer_nombre, ' ', COALESCE(e.enc_segundo_nombre, ''), ' ', 
+                     e.enc_primer_apellido, ' ', COALESCE(e.enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
         ORDER BY e.enc_id DESC 
         LIMIT ${limit} OFFSET ${offset}
       `;
-
       totalResult = await sql`
         SELECT COUNT(*) FROM cem_encargado 
-        WHERE (
-          CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', 
-                 enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
-        )
+        WHERE CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', 
+                     enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
       `;
-    } else if (dpi && telefono && !nombre) {
+    } 
 
+    else if (dpi && telefono && !nombre) {
       encargados = await sql`
         SELECT 
           e.*,
-          p.pan_nombre_familia
+          p.pan_descripcion
         FROM cem_encargado e
         LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
         WHERE e.enc_dpi = ${dpi}
@@ -94,19 +85,19 @@ export const obtenerEncargados = async (req, res) => {
         ORDER BY e.enc_id DESC 
         LIMIT ${limit} OFFSET ${offset}
       `;
-
       totalResult = await sql`
         SELECT COUNT(*) FROM cem_encargado 
         WHERE enc_dpi = ${dpi}
           AND (enc_telefono_uno = ${telefono} OR enc_telefono_dos = ${telefono})
       `;
-    } else if (dpi && nombre && !telefono) {
+    } 
 
+    else if (dpi && nombre && !telefono) {
       const nombreBusqueda = `%${nombre}%`;
       encargados = await sql`
         SELECT 
           e.*,
-          p.pan_nombre_familia
+          p.pan_descripcion
         FROM cem_encargado e
         LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
         WHERE e.enc_dpi = ${dpi}
@@ -115,20 +106,20 @@ export const obtenerEncargados = async (req, res) => {
         ORDER BY e.enc_id DESC 
         LIMIT ${limit} OFFSET ${offset}
       `;
-
       totalResult = await sql`
         SELECT COUNT(*) FROM cem_encargado 
         WHERE enc_dpi = ${dpi}
           AND CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', 
                      enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
       `;
-    } else if (telefono && nombre && !dpi) {
+    } 
 
+    else if (telefono && nombre && !dpi) {
       const nombreBusqueda = `%${nombre}%`;
       encargados = await sql`
         SELECT 
           e.*,
-          p.pan_nombre_familia
+          p.pan_descripcion
         FROM cem_encargado e
         LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
         WHERE (e.enc_telefono_uno = ${telefono} OR e.enc_telefono_dos = ${telefono})
@@ -137,20 +128,20 @@ export const obtenerEncargados = async (req, res) => {
         ORDER BY e.enc_id DESC 
         LIMIT ${limit} OFFSET ${offset}
       `;
-
       totalResult = await sql`
         SELECT COUNT(*) FROM cem_encargado 
         WHERE (enc_telefono_uno = ${telefono} OR enc_telefono_dos = ${telefono})
           AND CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', 
                      enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE ${nombreBusqueda}
       `;
-    } else {
+    } 
 
+    else {
       const nombreBusqueda = `%${nombre}%`;
       encargados = await sql`
         SELECT 
           e.*,
-          p.pan_nombre_familia
+          p.pan_descripcion
         FROM cem_encargado e
         LEFT JOIN cem_panteones p ON e.enc_panteones = p.pan_id
         WHERE e.enc_dpi = ${dpi}
@@ -160,7 +151,6 @@ export const obtenerEncargados = async (req, res) => {
         ORDER BY e.enc_id DESC 
         LIMIT ${limit} OFFSET ${offset}
       `;
-
       totalResult = await sql`
         SELECT COUNT(*) FROM cem_encargado 
         WHERE enc_dpi = ${dpi}
